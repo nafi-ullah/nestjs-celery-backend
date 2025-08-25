@@ -201,6 +201,20 @@ curl -X POST http://localhost:3000/mcpserver/mcpagent \
   }'
 ```
 
+### Example 4:
+```bash
+curl -X POST http://localhost:3000/mcpserver/mcpagent   -H "Content-Type: application/json"   -d '{
+    "task": "calculate_nutrition_with_llm",
+    "productId": "3",
+    "llmPrompt": "Calculate the daily protein percentage for a 70kg person",
+    "calculationData": {
+      "operation": "percentage",
+      "values": [31, 56]
+    }
+  }'
+```
+
+
 ## Response Format
 
 ### Success Response
