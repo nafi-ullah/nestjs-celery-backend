@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bull';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HellobuddyModule } from './hellobuddy/hellobuddy.module';
+import { McpserverModule } from './mcpserver/mcpserver.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { HellobuddyModule } from './hellobuddy/hellobuddy.module';
       },
       prefix: 'fuelai',
     }),
-    HellobuddyModule
+    HellobuddyModule,
+    McpserverModule
   ],
   controllers: [AppController],
   providers: [AppService],
