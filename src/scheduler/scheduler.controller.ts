@@ -24,6 +24,7 @@ import {
   ApiQuery
 } from '@nestjs/swagger';
 import { SchedulerService } from './scheduler.service';
+import { TaskQueueService } from './task-queue.service';
 import { CreateSchedulerTaskDto } from './dto/create-scheduler-task.dto';
 import { UpdateSchedulerTaskDto } from './dto/update-scheduler-task.dto';
 import { CreateMultipleSchedulerTasksDto } from './dto/create-multiple-scheduler-tasks.dto';
@@ -32,7 +33,10 @@ import { SchedulerTask, TaskStatus } from './entities/scheduler-task.entity';
 @ApiTags('scheduler')
 @Controller('scheduler')
 export class SchedulerController {
-  constructor(private readonly schedulerService: SchedulerService) {}
+  constructor(
+    private readonly schedulerService: SchedulerService,
+    private readonly taskQueueService: TaskQueueService,
+  ) {}
 
   @Post()
   @ApiOperation({ 
@@ -225,5 +229,26 @@ export class SchedulerController {
   })
   bulkUpdateStatus(@Body() body: { taskIds: number[]; status: TaskStatus }) {
     return this.schedulerService.bulkUpdateStatus(body.taskIds, body.status);
+  }
+
+  @Get('queue/status')
+  @ApiOperation({ 
+    summary: 'Get queue status',
+    description: 'Retrieves the current status of the task processing queue including waiting, active, completed and failed job counts'
+  })
+  @ApiOkResponse({
+    description: 'Queue status information.',
+    schema: {
+      type: 'object',
+      properties: {
+        waiting: { type: 'number', description: 'Number of jobs waiting to be processed' },
+        active: { type: 'number', description: 'Number of jobs currently being processed' },
+        completed: { type: 'number', description: 'Number of completed jobs' },
+        failed: { type: 'number', description: 'Number of failed jobs' }
+      }
+    }
+  })
+  getQueueStatus() {
+    return this.taskQueueService.getQueueInfo();
   }
 }

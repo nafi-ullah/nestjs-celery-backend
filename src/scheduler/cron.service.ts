@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { SchedulerTask, TaskStatus } from './entities/scheduler-task.entity';
+import { TaskQueueService } from './task-queue.service';
 
 @Injectable()
 export class CronService {
@@ -11,6 +12,7 @@ export class CronService {
   constructor(
     @InjectRepository(SchedulerTask)
     private schedulerTaskRepository: Repository<SchedulerTask>,
+    private taskQueueService: TaskQueueService,
   ) {}
 
   @Cron('0 */3 * * * *', { name: 'addRandomTasks' }) // Every 3 minutes
@@ -132,20 +134,21 @@ export class CronService {
         return;
       }
 
-      // Update all found pending tasks to "done" status
-      const updatePromises = pendingTasks.map(task => {
-        task.status = TaskStatus.DONE;
-        return this.schedulerTaskRepository.save(task);
-      });
+      this.logger.log(`Found ${pendingTasks.length} pending tasks to send to queue`);
 
-      await Promise.all(updatePromises);
+      // Send all pending tasks to the queue for processing by workers
+      await this.taskQueueService.addMultipleTasksToQueue(pendingTasks);
       
-      this.logger.log(`Successfully processed ${pendingTasks.length} pending tasks and marked them as done`);
+      this.logger.log(`Successfully sent ${pendingTasks.length} pending tasks to queue for processing`);
       
-      // Log details of processed tasks
+      // Log details of queued tasks
       pendingTasks.forEach(task => {
-        this.logger.log(`Processed task: ${task.task} (ID: ${task.taskId}) scheduled for ${task.scheduleTime.toISOString()}`);
+        this.logger.log(`Queued task: ${task.task} (ID: ${task.taskId}) scheduled for ${task.scheduleTime.toISOString()}`);
       });
+      
+      // Get and log queue status
+      const queueInfo = await this.taskQueueService.getQueueInfo();
+      this.logger.log(`Queue status - Waiting: ${queueInfo.waiting}, Active: ${queueInfo.active}, Completed: ${queueInfo.completed}, Failed: ${queueInfo.failed}`);
       
     } catch (error) {
       this.logger.error('Error processing pending tasks:', error);
