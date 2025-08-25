@@ -3,6 +3,12 @@
 - nest new hello-app
 - npm i class-validator class-transformer
 
+## For creating any module:
+
+nest g module hello
+nest g controller hello
+nest g service hello
+
 
 
 
